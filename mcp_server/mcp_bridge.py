@@ -17,7 +17,7 @@ import requests
 import tempfile
 import os
 from pathlib import Path
-from security import safe_command
+from security import safe_requests, safe_command
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -273,7 +273,7 @@ class MCPServer:
         params = arguments.get("params", {})
         
         url = f"{self.api_base_url}{endpoint}"
-        response = requests.get(url, params=params, timeout=60)
+        response = safe_requests.get(url, params=params, timeout=60)
         
         if response.status_code == 200:
             return response.json()
@@ -283,7 +283,7 @@ class MCPServer:
     async def _get_server_status(self) -> Dict[str, Any]:
         """Get server status."""
         try:
-            response = requests.get(f"{self.base_url}/status", timeout=60)
+            response = safe_requests.get(f"{self.base_url}/status", timeout=60)
             if response.status_code == 200:
                 return response.json()
             else:
