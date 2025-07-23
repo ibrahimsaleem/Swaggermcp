@@ -11,6 +11,7 @@ This example shows:
 import requests
 import tempfile
 import time
+from security import safe_requests
 
 # Example 1: Create a Python file with some utility functions
 utility_functions = '''
@@ -91,21 +92,21 @@ def main():
     
     # Test temperature conversion
     print("\n   📊 Temperature Conversion:")
-    resp = requests.get(f"{api_base}/celsius_to_fahrenheit?celsius=25", timeout=60)
+    resp = safe_requests.get(f"{api_base}/celsius_to_fahrenheit?celsius=25", timeout=60)
     print(f"   25°C = {resp.json()['result']}°F")
     
-    resp = requests.get(f"{api_base}/fahrenheit_to_celsius?fahrenheit=77", timeout=60)
+    resp = safe_requests.get(f"{api_base}/fahrenheit_to_celsius?fahrenheit=77", timeout=60)
     print(f"   77°F = {resp.json()['result']}°C")
     
     # Test BMI calculation
     print("\n   💪 BMI Calculation:")
-    resp = requests.get(f"{api_base}/calculate_bmi?weight_kg=70&height_m=1.75", timeout=60)
+    resp = safe_requests.get(f"{api_base}/calculate_bmi?weight_kg=70&height_m=1.75", timeout=60)
     print(f"   BMI for 70kg, 1.75m = {resp.json()['result']:.2f}")
     
     # Test prime numbers
     print("\n   🔢 Prime Number Check:")
     for n in [7, 10, 17, 100]:
-        resp = requests.get(f"{api_base}/is_prime?n={n}", timeout=60)
+        resp = safe_requests.get(f"{api_base}/is_prime?n={n}", timeout=60)
         is_prime = resp.json()['result']
         print(f"   {n} is {'prime' if is_prime else 'not prime'}")
     
@@ -113,7 +114,7 @@ def main():
     print("\n   🌀 Fibonacci Sequence:")
     fibs = []
     for i in range(10):
-        resp = requests.get(f"{api_base}/fibonacci?n={i}", timeout=60)
+        resp = safe_requests.get(f"{api_base}/fibonacci?n={i}", timeout=60)
         fibs.append(str(resp.json()['result']))
     print(f"   First 10 numbers: {', '.join(fibs)}")
     
