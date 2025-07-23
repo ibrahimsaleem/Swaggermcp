@@ -45,9 +45,9 @@ class MCPServer:
                 return self._create_response(request_id, {
                     "protocolVersion": "1.0",
                     "capabilities": {
-                        "tools": True,
-                        "resources": True,
-                        "prompts": True
+                        "tools": {},
+                        "resources": {},
+                        "prompts": {}
                     },
                     "serverInfo": {
                         "name": "python-to-api-mcp-server",
