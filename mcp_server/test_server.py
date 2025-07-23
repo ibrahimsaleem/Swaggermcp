@@ -15,14 +15,14 @@ import subprocess
 import sys
 import json
 from pathlib import Path
+from security import safe_command
 
 def test_mcp_server():
     print("🚀 Starting MCP Server Test Suite\n")
     
     # Start the MCP server
     print("1. Starting MCP server on port 8000...")
-    server_proc = subprocess.Popen(
-        [sys.executable, "-m", "uvicorn", "main:app", "--port", "8000"],
+    server_proc = safe_command.run(subprocess.Popen, [sys.executable, "-m", "uvicorn", "main:app", "--port", "8000"],
         cwd=Path(__file__).parent
     )
     
