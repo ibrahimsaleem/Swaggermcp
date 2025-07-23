@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "python-to-api": {
+      "command": "python",
+      "args": ["-m", "mcp_server.mcp_bridge"],
+      "cwd": "/absolute/path/to/mcp_server",
+      "env": {
+        "MCP_SERVER_PORT": "8000",
+        "GENERATED_API_PORT": "8001"
+      }
+    }
+  }
+}
