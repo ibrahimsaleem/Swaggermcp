@@ -112,3 +112,32 @@ In Cursor IDE (or any MCP client), you'd:
 1. Detect file save → call `/upload`
 2. Show returned Swagger URL to user
 3. Optionally fetch `/openapi.json` and surface endpoint palette
+
+## Connecting MCP Clients
+
+This server now includes full MCP (Model Context Protocol) support! See [MCP_CLIENT_SETUP.md](MCP_CLIENT_SETUP.md) for detailed instructions on connecting:
+
+- **Claude Desktop**: Add to `claude_desktop_config.json`
+- **Cursor IDE**: Configure in `.cursor/mcp_config.json`
+- **MCP CLI**: Use `mcp connect` command
+- **Custom Clients**: Connect via stdin/stdout JSON-RPC
+
+### Quick Setup for Claude Desktop
+
+```json
+{
+  "mcpServers": {
+    "python-to-api": {
+      "command": "python",
+      "args": ["-m", "mcp_server.mcp_bridge"],
+      "cwd": "/absolute/path/to/mcp_server"
+    }
+  }
+}
+```
+
+The MCP bridge (`mcp_bridge.py`) provides tools for:
+- Uploading Python files
+- Listing generated endpoints
+- Calling API endpoints
+- Checking server status
