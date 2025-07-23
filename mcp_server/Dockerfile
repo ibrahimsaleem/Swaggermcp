@@ -15,5 +15,5 @@ COPY . .
 EXPOSE 8000
 EXPOSE 8001
 
-# Start the server
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start the server using the new startup script
+CMD ["python", "start_mcp_server.py"]

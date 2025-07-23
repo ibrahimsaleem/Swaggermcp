@@ -317,21 +317,10 @@ async def run_mcp_server():
     """Run the MCP server, reading from stdin and writing to stdout."""
     server = MCPServer()
     
-    # First, ensure the FastAPI server is running
-    logger.info("Starting Python-to-API FastAPI server...")
-    import subprocess
-    import time
-    
-    # Start the FastAPI server in the background
-    server_process = subprocess.Popen(
-        [sys.executable, "-m", "uvicorn", "main:app", "--port", server.server_port],
-        cwd=Path(__file__).parent
-    )
-    
-    # Give it time to start
-    time.sleep(3)
-    
+    # The FastAPI server should be started separately, not by this MCP bridge
+    # The main.py handles its own startup/shutdown through FastAPI events
     logger.info("MCP Bridge ready for requests")
+    logger.info(f"Expecting FastAPI server at: {server.base_url}")
     
     try:
         # Read JSON-RPC messages from stdin
@@ -379,9 +368,7 @@ async def run_mcp_server():
     
     finally:
         # Clean up
-        logger.info("Shutting down...")
-        server_process.terminate()
-        server_process.wait()
+        logger.info("Shutting down MCP Bridge...")
 
 if __name__ == "__main__":
     asyncio.run(run_mcp_server())

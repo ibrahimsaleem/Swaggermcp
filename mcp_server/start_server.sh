@@ -11,5 +11,5 @@ echo ""
 echo "Press Ctrl+C to stop the server."
 echo ""
 
-# Start the main MCP server
-uvicorn main:app --reload --port 8000
+# Start the server using the new startup script that properly manages processes
+python start_mcp_server.py
