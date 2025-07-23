@@ -64,21 +64,28 @@ def generate_fastapi_app_source(
         fname = fmeta["name"]
         args = fmeta["args"]
         doc = fmeta.get("docstring") or ""
+        defaults = fmeta.get("defaults", {})
         endpoint_path = f"/{fname}"
         endpoint_paths.append(endpoint_path)
 
-        # Build param signature for FastAPI function: all str (query params)
-        if args:
-            param_sig = ", ".join([f"{a}: str" for a in args])
-        else:
-            param_sig = ""
+        # Build param signature for FastAPI function: required and optional
+        param_sig_parts = []
+        for a in args:
+            if a in defaults:
+                param_sig_parts.append(f"{a}: str = None")
+            else:
+                param_sig_parts.append(f"{a}: str")
+        param_sig = ", ".join(param_sig_parts)
 
         # Build conversion + call body
-        # We'll build arglist expression: coerce each
-        if args:
-            coerced_args_expr = ", ".join([f"_coerce_param({a})" for a in args])
-        else:
-            coerced_args_expr = ""
+        # We'll build arglist expression: coerce each, pass None if not provided
+        coerced_args_expr_parts = []
+        for a in args:
+            if a in defaults:
+                coerced_args_expr_parts.append(f"_coerce_param({a}) if {a} is not None else None")
+            else:
+                coerced_args_expr_parts.append(f"_coerce_param({a})")
+        coerced_args_expr = ", ".join(coerced_args_expr_parts)
 
         endpoint_block = f"""
 @app.get("{endpoint_path}", summary="{fname}", description={repr(doc)})
