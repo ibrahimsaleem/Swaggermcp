@@ -32,14 +32,14 @@ def test_mcp_server():
     try:
         # Check server status
         print("2. Checking server status...")
-        status_resp = requests.get("http://localhost:8000/status")
+        status_resp = requests.get("http://localhost:8000/status", timeout=60)
         print(f"   Status: {status_resp.json()}\n")
         
         # Upload test file
         print("3. Uploading test_funcs.py...")
         with open("test_funcs.py", "rb") as f:
             files = {"file": ("test_funcs.py", f, "text/x-python")}
-            upload_resp = requests.post("http://localhost:8000/upload", files=files)
+            upload_resp = requests.post("http://localhost:8000/upload", files=files, timeout=60)
         
         result = upload_resp.json()
         print(f"   Upload response: {json.dumps(result, indent=2)}\n")
@@ -62,7 +62,7 @@ def test_mcp_server():
         for method, url, desc in tests:
             print(f"\n   Testing: {desc}")
             print(f"   URL: {url}")
-            resp = requests.request(method, url)
+            resp = requests.request(method, url, timeout=60)
             print(f"   Result: {resp.json()}")
         
         print(f"\n5. ✅ All tests completed!")
