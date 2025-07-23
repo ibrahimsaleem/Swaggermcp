@@ -232,7 +232,7 @@ class MCPServer:
             
             with open(file_path, "rb") as f:
                 files = {"file": (os.path.basename(file_path), f, "text/x-python")}
-                response = requests.post(f"{self.base_url}/upload", files=files)
+                response = requests.post(f"{self.base_url}/upload", files=files, timeout=60)
         
         elif "content" in arguments:
             # Upload from content
@@ -244,7 +244,7 @@ class MCPServer:
             try:
                 with open(temp_path, "rb") as f:
                     files = {"file": ("uploaded_code.py", f, "text/x-python")}
-                    response = requests.post(f"{self.base_url}/upload", files=files)
+                    response = requests.post(f"{self.base_url}/upload", files=files, timeout=60)
             finally:
                 os.unlink(temp_path)
         
@@ -272,7 +272,7 @@ class MCPServer:
         params = arguments.get("params", {})
         
         url = f"{self.api_base_url}{endpoint}"
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, timeout=60)
         
         if response.status_code == 200:
             return response.json()
@@ -282,7 +282,7 @@ class MCPServer:
     async def _get_server_status(self) -> Dict[str, Any]:
         """Get server status."""
         try:
-            response = requests.get(f"{self.base_url}/status")
+            response = requests.get(f"{self.base_url}/status", timeout=60)
             if response.status_code == 200:
                 return response.json()
             else:
