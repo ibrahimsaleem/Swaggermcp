@@ -17,6 +17,7 @@ import requests
 import tempfile
 import os
 from pathlib import Path
+from security import safe_command
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -323,8 +324,7 @@ async def run_mcp_server():
     import time
     
     # Start the FastAPI server in the background
-    server_process = subprocess.Popen(
-        [sys.executable, "-m", "uvicorn", "main:app", "--port", server.server_port],
+    server_process = safe_command.run(subprocess.Popen, [sys.executable, "-m", "uvicorn", "main:app", "--port", server.server_port],
         cwd=Path(__file__).parent
     )
     
