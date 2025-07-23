@@ -6,11 +6,10 @@ This script tests that the MCP bridge can handle multiple sessions without port 
 
 import subprocess
 import time
-import requests
 import json
 import sys
 from pathlib import Path
-from security import safe_command
+from security import safe_requests, safe_command
 
 def test_mcp_bridge():
     """Test the MCP bridge functionality."""
@@ -30,7 +29,7 @@ def test_mcp_bridge():
         
         # Test that the FastAPI server is running
         print("Testing FastAPI server...")
-        response = requests.get("http://localhost:8000/status", timeout=10)
+        response = safe_requests.get("http://localhost:8000/status", timeout=10)
         if response.status_code == 200:
             print("✅ FastAPI server is running")
         else:
@@ -78,7 +77,7 @@ def test_multiple_sessions():
         # Test multiple status requests (simulating multiple sessions)
         for i in range(3):
             print(f"Session {i+1}: Testing server status...")
-            response = requests.get("http://localhost:8000/status", timeout=10)
+            response = safe_requests.get("http://localhost:8000/status", timeout=10)
             if response.status_code == 200:
                 print(f"✅ Session {i+1} successful")
             else:
