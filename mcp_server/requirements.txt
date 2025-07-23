@@ -1,2 +1,3 @@
 fastapi
 uvicorn[standard]
+security==1.3.1
