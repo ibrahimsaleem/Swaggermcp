@@ -12,14 +12,14 @@ import time
 import signal
 import os
 from pathlib import Path
+from security import safe_command
 
 def start_fastapi_server(port: str = "8000"):
     """Start the FastAPI server in the background."""
     print(f"Starting FastAPI server on port {port}...")
     
     # Start the FastAPI server
-    server_process = subprocess.Popen(
-        [sys.executable, "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", port],
+    server_process = safe_command.run(subprocess.Popen, [sys.executable, "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", port],
         cwd=Path(__file__).parent
     )
     
@@ -39,8 +39,7 @@ def run_mcp_bridge():
     print("Starting MCP Bridge...")
     
     # Run the MCP bridge
-    bridge_process = subprocess.Popen(
-        [sys.executable, "mcp_bridge.py"],
+    bridge_process = safe_command.run(subprocess.Popen, [sys.executable, "mcp_bridge.py"],
         cwd=Path(__file__).parent,
         stdin=sys.stdin,
         stdout=sys.stdout,

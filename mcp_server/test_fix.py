@@ -10,6 +10,7 @@ import requests
 import json
 import sys
 from pathlib import Path
+from security import safe_command
 
 def test_mcp_bridge():
     """Test the MCP bridge functionality."""
@@ -17,8 +18,7 @@ def test_mcp_bridge():
     
     # Start the server using the new startup script
     print("Starting server...")
-    server_process = subprocess.Popen(
-        [sys.executable, "start_mcp_server.py"],
+    server_process = safe_command.run(subprocess.Popen, [sys.executable, "start_mcp_server.py"],
         cwd=Path(__file__).parent,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
@@ -66,8 +66,7 @@ def test_multiple_sessions():
     print("\nTesting multiple sessions...")
     
     # Start server
-    server_process = subprocess.Popen(
-        [sys.executable, "start_mcp_server.py"],
+    server_process = safe_command.run(subprocess.Popen, [sys.executable, "start_mcp_server.py"],
         cwd=Path(__file__).parent,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
