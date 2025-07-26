@@ -1,0 +1,4 @@
+version: 1
+start:
+  command: ["python", "core/server.py"]
+  port: 8000 
