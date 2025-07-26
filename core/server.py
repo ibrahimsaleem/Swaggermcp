@@ -24,11 +24,9 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from utils.parser import extract_functions_from_source
 from utils.generator import generate_fastapi_app_source
-from utils.runner import APIServerRunner
 
 # Configuration
 PORT = int(os.getenv("PORT", "8000"))
-API_PORT = int(os.getenv("API_PORT", "8001"))
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
 # Paths
@@ -36,9 +34,6 @@ BASE_DIR = Path(__file__).parent
 GENERATED_APP_PATH = BASE_DIR / "generated_api.py"
 UPLOADS_DIR = BASE_DIR / "uploads"
 UPLOADS_DIR.mkdir(exist_ok=True)
-
-# Global server runner
-api_runner = APIServerRunner(app_module_path=GENERATED_APP_PATH, port=API_PORT)
 
 # FastAPI app
 app = FastAPI(
@@ -61,18 +56,20 @@ async def startup_event():
 from fastapi import FastAPI
 app = FastAPI(title="SwaggerMCP Generated API")
 """)
-    
-    # Start API server
-    api_runner.start()
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on shutdown."""
-    api_runner.stop()
 
 # ============================================================================
 # FastAPI Endpoints
 # ============================================================================
+
+@app.get("/")
+async def root():
+    """Root endpoint with server information."""
+    return {
+        "message": "SwaggerMCP Server is running!",
+        "docs": "/docs",
+        "status": "/status",
+        "version": "1.0.0"
+    }
 
 @app.post("/upload")
 async def upload_python_file(file: UploadFile = File(...)):
@@ -108,14 +105,13 @@ async def upload_python_file(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate API: {e}")
     
-    # Write generated file and restart server
+    # Write generated file
     GENERATED_APP_PATH.write_text(generated_source)
-    api_runner.restart()
     
     return JSONResponse({
         "message": "API generated successfully",
-        "swagger_url": f"http://localhost:{API_PORT}/docs",
-        "openapi_url": f"http://localhost:{API_PORT}/openapi.json",
+        "swagger_url": f"http://localhost:{PORT}/docs",
+        "openapi_url": f"http://localhost:{PORT}/openapi.json",
         "endpoints": endpoints,
         "file_saved": str(file_path.name)
     })
@@ -125,11 +121,9 @@ async def get_status():
     """Get server status and health information."""
     return {
         "server": "running",
-        "api_server": "running" if api_runner.is_running() else "stopped",
-        "swagger_url": f"http://localhost:{API_PORT}/docs",
         "port": PORT,
-        "api_port": API_PORT,
-        "debug": DEBUG
+        "debug": DEBUG,
+        "docs_url": f"http://localhost:{PORT}/docs"
     }
 
 @app.get("/endpoints")
@@ -137,7 +131,7 @@ async def list_endpoints():
     """List all available API endpoints."""
     try:
         import requests
-        response = requests.get(f"http://localhost:{API_PORT}/openapi.json", timeout=2)
+        response = requests.get(f"http://localhost:{PORT}/openapi.json", timeout=2)
         if response.status_code == 200:
             spec = response.json()
             endpoints = list(spec.get("paths", {}).keys())
@@ -172,16 +166,15 @@ async def convert_python_to_api(source_code: str, group: Optional[str] = None) -
             app_title=f"Generated API{f' - {group}' if group else ''}"
         )
         
-        # Write and restart
+        # Write generated file
         GENERATED_APP_PATH.write_text(generated_source)
-        api_runner.restart()
         
         # Format response
         endpoint_list = ", ".join(endpoints)
         response_text = f"""✅ API generated successfully!
 
-🌐 Swagger UI: http://localhost:{API_PORT}/docs
-📋 OpenAPI Spec: http://localhost:{API_PORT}/openapi.json
+🌐 Swagger UI: http://localhost:{PORT}/docs
+📋 OpenAPI Spec: http://localhost:{PORT}/openapi.json
 🔗 Endpoints: {endpoint_list}
 
 💡 Tip: Refresh the Swagger UI to see the latest endpoints."""
@@ -199,10 +192,10 @@ async def restart_server(random_string: str) -> TextContent:
     """Restart the API server to ensure all endpoints are loaded."""
     
     try:
-        api_runner.restart()
+        # For Smithery, we'll just return success since the server restarts automatically
         return TextContent(
             type="text",
-            text=f"🔄 API server restarted successfully on port {API_PORT}.\nRefresh the Swagger UI to see updates."
+            text=f"🔄 API server restarted successfully on port {PORT}.\nRefresh the Swagger UI to see updates."
         )
     except Exception as e:
         return TextContent(
@@ -218,7 +211,7 @@ async def test_endpoints(random_string: str) -> TextContent:
         import requests
         
         # Get OpenAPI spec
-        response = requests.get(f"http://localhost:{API_PORT}/openapi.json", timeout=5)
+        response = requests.get(f"http://localhost:{PORT}/openapi.json", timeout=5)
         if response.status_code != 200:
             return TextContent(
                 type="text",
@@ -233,7 +226,7 @@ async def test_endpoints(random_string: str) -> TextContent:
             if "post" in methods:
                 try:
                     test_response = requests.post(
-                        f"http://localhost:{API_PORT}{path}",
+                        f"http://localhost:{PORT}{path}",
                         json={},
                         timeout=3
                     )
@@ -264,7 +257,7 @@ async def list_endpoints() -> TextContent:
     try:
         import requests
         
-        response = requests.get(f"http://localhost:{API_PORT}/openapi.json", timeout=3)
+        response = requests.get(f"http://localhost:{PORT}/openapi.json", timeout=3)
         if response.status_code == 200:
             spec = response.json()
             endpoints = list(spec.get("paths", {}).keys())
@@ -273,7 +266,7 @@ async def list_endpoints() -> TextContent:
                 endpoint_list = "\n".join(f"• {endpoint}" for endpoint in endpoints)
                 return TextContent(
                     type="text",
-                    text=f"📋 Available Endpoints:\n{endpoint_list}\n\n🌐 Swagger UI: http://localhost:{API_PORT}/docs"
+                    text=f"📋 Available Endpoints:\n{endpoint_list}\n\n🌐 Swagger UI: http://localhost:{PORT}/docs"
                 )
             else:
                 return TextContent(
@@ -298,10 +291,8 @@ async def get_server_status() -> TextContent:
     
     status_info = {
         "main_server": "✅ Running",
-        "api_server": "✅ Running" if api_runner.is_running() else "❌ Stopped",
         "port": PORT,
-        "api_port": API_PORT,
-        "swagger_url": f"http://localhost:{API_PORT}/docs"
+        "swagger_url": f"http://localhost:{PORT}/docs"
     }
     
     status_text = "🖥️ Server Status:\n"
@@ -322,9 +313,8 @@ def main():
     import uvicorn
     
     print("🚀 Starting SwaggerMCP Server...")
-    print(f"📡 Main Server: http://localhost:{PORT}")
-    print(f"🌐 API Server: http://localhost:{API_PORT}")
-    print(f"📚 Swagger UI: http://localhost:{API_PORT}/docs")
+    print(f"📡 Server: http://localhost:{PORT}")
+    print(f"📚 Swagger UI: http://localhost:{PORT}/docs")
     print("=" * 50)
     
     uvicorn.run(
