@@ -1,419 +1,331 @@
-# Swaggermcp
+# 🚀 SwaggerMCP - AI-Powered Python to API Generator
 
----
+> **Transform Python functions into REST APIs instantly with AI assistance**
 
-# MCP Python-to-API Generator (MVP)
+SwaggerMCP is a powerful tool that automatically converts Python functions into REST API endpoints with full Swagger documentation. It features seamless Model Context Protocol (MCP) integration, allowing AI assistants like Claude to directly create and manage APIs.
 
-Upload any Python script with top-level functions. The orchestrator parses the functions and exposes each as a FastAPI endpoint with auto-generated Swagger docs.
+## ✨ Features
 
-## Quick Start
+- 🔄 **Instant API Generation** - Convert Python functions to REST endpoints in seconds
+- 🤖 **AI Integration** - Full MCP support for Claude, Cursor, and other AI assistants
+- 📚 **Auto Documentation** - Automatic Swagger UI generation
+- 🧪 **Live Testing** - Built-in endpoint testing and validation
+- 🔧 **Hot Reload** - Real-time API updates without server restarts
+- 🐳 **Docker Ready** - Containerized deployment support
+
+## 🏗️ Architecture
+
+```
+SwaggerMCP/
+├── 📁 core/                    # Core server components
+│   ├── server.py              # Main FastAPI server
+│   ├── mcp_bridge.py          # MCP protocol implementation
+│   └── converter.py           # Python to API converter
+├── 📁 utils/                   # Utility modules
+│   ├── parser.py              # AST-based code parsing
+│   ├── generator.py           # FastAPI code generation
+│   └── runner.py              # Server lifecycle management
+├── 📁 configs/                 # Configuration files
+│   ├── cursor.json            # Cursor IDE setup
+│   ├── claude.json            # Claude Desktop setup
+│   └── docker.json            # Docker configuration
+├── 📁 examples/                # Example functions and demos
+│   ├── math_functions.py      # Mathematical operations
+│   ├── string_utils.py        # String manipulation
+│   └── algorithms.py          # Algorithm implementations
+├── 📁 docs/                    # Documentation
+├── 🐳 Dockerfile              # Container configuration
+├── 📋 requirements.txt        # Python dependencies
+└── 📖 README.md               # This file
+```
+
+## 🚀 Quick Start
+
+### 1. Installation
 
 ```bash
-# Setup virtual environment
-python -m venv .venv
-source .venv/bin/activate  # or .venv\\Scripts\\activate on Windows
+# Clone the repository
+git clone https://github.com/ibrahimsaleem/Swaggermcp.git
+cd Swaggermcp
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
+```
 
+### 2. Start the Server
+
+```bash
 # Start the MCP server
-uvicorn main:app --reload --port 8000
+python core/server.py
+
+# Or use Docker
+docker build -t swaggermcp .
+docker run -p 8000:8000 -p 8001:8001 swaggermcp
 ```
 
-## Usage
+### 3. Connect AI Assistant
 
-### Upload a Python script
+#### Cursor IDE Setup
 
-```bash
-curl -F "file=@examples/sample_funcs.py" http://localhost:8000/upload
-```
-
-### Response
-
-```json
-{
-  "message": "Endpoints created.",
-  "swagger_url": "http://localhost:8001/docs",
-  "openapi_url": "http://localhost:8001/openapi.json",
-  "endpoints": ["/add", "/subtract"]
-}
-```
-
-Open the Swagger URL in a browser to test your functions.
-
-## How It Works
-
-1. `/upload` accepts `.py` files
-2. We AST-parse top-level `def` functions
-3. Generate `generated_fastapi_app.py`
-4. Restart a uvicorn subprocess serving those endpoints
-5. Reply with test URLs
-
-## Example Test File
-
-Create `test_funcs.py`:
-```python
-def add(x, y):
-    """Add two numbers."""
-    return int(x) + int(y)
-
-def greet(name="world"):
-    """Greet someone."""
-    return f"Hello, {name}!"
-
-def multiply(a, b):
-    """Multiply two numbers."""
-    return float(a) * float(b)
-```
-
-Upload it:
-```bash
-curl -F "file=@test_funcs.py" http://localhost:8000/upload
-```
-
-Then visit http://localhost:8001/docs to see and test your endpoints.
-
-## Limitations (MVP)
-
-- Query params only; all strings coerced at runtime
-- No nested imports resolution
-- No security / sandboxing
-- Single upload at a time (latest wins)
-- No async function support yet
-
-## Security Warning
-
-⚠️ **Never execute untrusted user Python code directly on a production host.**
-
-For MVP/dev: OK. For real use, isolate via containers, firejail, gVisor, or serverless workers.
-
-## Architecture
-
-- **main.py**: MCP orchestration server that handles file uploads
-- **utils/code_parser.py**: AST-based function extraction
-- **utils/fastapi_writer.py**: Generates FastAPI code from parsed functions
-- **utils/runner.py**: Manages uvicorn subprocess lifecycle
-- **generated_fastapi_app.py**: Auto-generated API (overwritten on each upload)
-
-## Type Handling
-
-- All function params assumed `str` inputs (safer + predictable from query params)
-- Runtime type coercion attempts: int → float → bool → JSON → string
-- Return values serialized to JSON (best-effort)
-
-## Roadmap
-
-- Type hints → Pydantic models
-- POST for complex JSON bodies
-- Auth / sandboxing
-- Multi-file module support
-- Versioned APIs
-- Async function support
-
-## MCP Integration Pattern
-
-In Cursor IDE (or any MCP client), you'd:
-1. Detect file save → call `/upload`
-2. Show returned Swagger URL to user
-3. Optionally fetch `/openapi.json` and surface endpoint palette
-
-## Connecting MCP Clients
-
-This server now includes full MCP (Model Context Protocol) support! See [MCP_CLIENT_SETUP.md](MCP_CLIENT_SETUP.md) for detailed instructions on connecting:
-
-- **Claude Desktop**: Add to `claude_desktop_config.json`
-- **Cursor IDE**: Configure in `.cursor/mcp_config.json`
-- **MCP CLI**: Use `mcp connect` command
-- **Custom Clients**: Connect via stdin/stdout JSON-RPC
-
-### Quick Setup for Claude Desktop
+Create `.cursor/mcp.json` in your project:
 
 ```json
 {
   "mcpServers": {
-    "python-to-api": {
+    "swaggermcp": {
       "command": "python",
-      "args": ["-m", "mcp_server.mcp_bridge"],
-      "cwd": "/absolute/path/to/mcp_server"
+      "args": ["core/server.py"],
+      "transport": "stdio"
     }
   }
 }
 ```
 
-The MCP bridge (`mcp_bridge.py`) provides tools for:
-- Uploading Python files
-- Listing generated endpoints
-- Calling API endpoints
-- Checking server status
+#### Claude Desktop Setup
+
+Edit your Claude configuration:
+
+```json
+{
+  "mcpServers": {
+    "swaggermcp": {
+      "command": "python",
+      "args": ["/path/to/SwaggerMCP/core/server.py"],
+      "transport": "stdio"
+    }
+  }
+}
+```
+
+## 🛠️ Usage
+
+### Via AI Assistant
+
+Once connected, simply ask your AI assistant:
+
+> "Convert this Python function to an API endpoint:"
+> ```python
+> def add(a: int, b: int) -> int:
+>     return a + b
+> ```
+
+The AI will automatically:
+1. Parse the function
+2. Generate the API endpoint
+3. Provide the Swagger UI link
+4. Test the endpoint
+
+### Via Direct API
+
+```bash
+# Upload Python file
+curl -F "file=@functions.py" http://localhost:8000/upload
+
+# Access Swagger UI
+open http://localhost:8001/docs
+```
+
+## 📊 Generated Endpoints
+
+SwaggerMCP supports various function types:
+
+### 🔢 Mathematical Operations
+```python
+def add(a: int, b: int) -> int:
+    return a + b
+
+def factorial(n: int) -> int:
+    return math.factorial(n)
+```
+
+### 📝 String Processing
+```python
+def is_palindrome(text: str) -> bool:
+    return text.lower() == text.lower()[::-1]
+
+def reverse_string(text: str) -> str:
+    return text[::-1]
+```
+
+### 🧮 Algorithms
+```python
+def fibonacci(n: int) -> int:
+    if n <= 1:
+        return n
+    return fibonacci(n-1) + fibonacci(n-2)
+
+def binary_search(arr: list, target: int) -> int:
+    # Implementation here
+    pass
+```
+
+### 🔍 Data Analysis
+```python
+def analyze_text(text: str) -> dict:
+    return {
+        "length": len(text),
+        "words": len(text.split()),
+        "characters": len(text.replace(" ", ""))
+    }
+```
+
+## 🌐 API Access
+
+### Swagger UI
+- **Main API**: http://localhost:8001/docs
+- **OpenAPI Spec**: http://localhost:8001/openapi.json
+
+### Example API Calls
+
+```bash
+# Test mathematical function
+curl -X POST "http://localhost:8001/add" \
+     -H "Content-Type: application/json" \
+     -d '{"a": 5, "b": 3}'
+
+# Test string function
+curl -X POST "http://localhost:8001/is_palindrome" \
+     -H "Content-Type: application/json" \
+     -d '{"text": "racecar"}'
+```
+
+## 🔧 MCP Tools
+
+Available tools for AI assistants:
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `convert_python_to_api` | Convert Python code to API endpoints | `source_code`, `group` |
+| `restart_server` | Restart the API server | `random_string` |
+| `test_endpoints` | Test all available endpoints | `random_string` |
+| `list_endpoints` | List current endpoints | None |
+| `get_server_status` | Get server health status | None |
+
+## 🚨 Security & Best Practices
+
+### ⚠️ Security Considerations
+
+1. **Code Execution**: SwaggerMCP executes uploaded Python code
+2. **Development Use**: Designed for development and prototyping
+3. **Production**: Add authentication, rate limiting, and sandboxing
+
+### 🔒 Production Deployment
+
+```bash
+# Use Docker with security
+docker run --security-opt seccomp=unconfined \
+           --cap-drop=ALL \
+           -p 8000:8000 \
+           swaggermcp
+
+# Add authentication
+export API_KEY="your-secret-key"
+python core/server.py --auth
+```
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| MCP connection fails | Check Python path and restart client |
+| Endpoints not appearing | Use `restart_server` tool |
+| Port conflicts | Change ports in config or kill existing processes |
+| Import errors | Ensure all dependencies are installed |
+
+### Debug Mode
+
+```bash
+export DEBUG=1
+python core/server.py --verbose
+```
+
+## 🔮 Roadmap
+
+### 🎯 Upcoming Features
+- [ ] **Type Safety** - Pydantic model generation
+- [ ] **Authentication** - Built-in auth system
+- [ ] **Rate Limiting** - API usage controls
+- [ ] **Database Integration** - SQL/NoSQL support
+- [ ] **Async Support** - Async function handling
+- [ ] **Versioning** - API version management
+- [ ] **Monitoring** - Usage analytics and logging
+
+### 🚧 Current Limitations
+- Single file uploads only
+- No nested imports
+- Basic type coercion
+- Development-focused security
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how to get started:
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+### Development Setup
+
+```bash
+# Clone and setup
+git clone https://github.com/ibrahimsaleem/Swaggermcp.git
+cd Swaggermcp
+
+# Install dev dependencies
+pip install -r requirements-dev.txt
+
+# Run tests
+python -m pytest tests/
+
+# Format code
+black core/ utils/ examples/
+```
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+### Getting Help
+
+1. 📖 **Documentation**: Check the [docs/](docs/) folder
+2. 🐛 **Issues**: Open an issue on GitHub
+3. 💬 **Discussions**: Use GitHub Discussions
+4. 📧 **Email**: Contact the maintainers
+
+### Issue Template
+
+When reporting issues, please include:
+- Operating system and Python version
+- MCP client being used
+- Error messages and logs
+- Steps to reproduce
+
+## 🙏 Acknowledgments
+
+- **FastAPI** - Modern web framework
+- **MCP Protocol** - AI assistant integration
+- **Swagger UI** - API documentation
+- **Python AST** - Code parsing capabilities
 
 ---
 
-# MCP Client Connection Guide
+<div align="center">
 
-This guide explains how to connect various MCP (Model Context Protocol) clients to the Python-to-API MCP server.
+**Made with ❤️ for the AI community**
 
-## Overview
+[![GitHub stars](https://img.shields.io/github/stars/ibrahimsaleem/Swaggermcp?style=social)](https://github.com/ibrahimsaleem/Swaggermcp/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/ibrahimsaleem/Swaggermcp?style=social)](https://github.com/ibrahimsaleem/Swaggermcp/network/members)
+[![GitHub issues](https://img.shields.io/github/issues/ibrahimsaleem/Swaggermcp)](https://github.com/ibrahimsaleem/Swaggermcp/issues)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-The Python-to-API MCP server implements the Model Context Protocol, allowing AI assistants like Claude to:
-- Upload Python files and convert functions to REST APIs
-- Query available endpoints
-- Execute API calls
-- Access Swagger documentation
-
-## Connection Methods
-
-### 1. Claude Desktop App
-
-Add this server to your Claude Desktop configuration:
-
-1. Open Claude Desktop settings
-2. Navigate to "Developer" → "MCP Servers"
-3. Add the following configuration:
-
-```json
-{
-  "python-to-api": {
-    "command": "python",
-    "args": ["-m", "mcp_server.mcp_bridge"],
-    "cwd": "/path/to/mcp_server",
-    "env": {
-      "MCP_SERVER_PORT": "8000",
-      "GENERATED_API_PORT": "8001"
-    }
-  }
-}
-```
-
-Or edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
-
-```json
-{
-  "mcpServers": {
-    "python-to-api": {
-      "command": "python",
-      "args": ["-m", "mcp_server.mcp_bridge"],
-      "cwd": "/absolute/path/to/mcp_server",
-      "env": {
-        "MCP_SERVER_PORT": "8000",
-        "GENERATED_API_PORT": "8001"
-      }
-    }
-  }
-}
-```
-
-### 2. Cursor IDE
-
-For Cursor IDE integration:
-
-1. Install the MCP extension (if available)
-2. Add to `.cursor/mcp_config.json` in your project:
-
-```json
-{
-  "servers": {
-    "python-to-api": {
-      "command": "python",
-      "args": ["-m", "mcp_server.mcp_bridge"],
-      "cwd": "${workspaceFolder}/mcp_server",
-      "env": {
-        "MCP_SERVER_PORT": "8000",
-        "GENERATED_API_PORT": "8001"
-      }
-    }
-  }
-}
-```
-
-### 3. MCP CLI Client
-
-For testing with the MCP CLI:
-
-```bash
-# Install MCP CLI
-npm install -g @modelcontextprotocol/cli
-
-# Connect to the server
-mcp connect python -m mcp_server.mcp_bridge --cwd /path/to/mcp_server
-```
-
-### 4. Custom MCP Client
-
-To connect a custom MCP client:
-
-```python
-import subprocess
-import json
-import asyncio
-
-async def connect_to_mcp_server():
-    # Start the MCP server process
-    process = await asyncio.create_subprocess_exec(
-        'python', '-m', 'mcp_server.mcp_bridge',
-        cwd='/path/to/mcp_server',
-        stdin=asyncio.subprocess.PIPE,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        env={
-            **os.environ,
-            'MCP_SERVER_PORT': '8000',
-            'GENERATED_API_PORT': '8001'
-        }
-    )
-    
-    # Send initialization request
-    request = {
-        "jsonrpc": "2.0",
-        "method": "initialize",
-        "params": {
-            "protocolVersion": "1.0",
-            "clientInfo": {
-                "name": "custom-client",
-                "version": "1.0"
-            }
-        },
-        "id": 1
-    }
-    
-    process.stdin.write(json.dumps(request).encode() + b'\n')
-    await process.stdin.drain()
-    
-    # Read response
-    response = await process.stdout.readline()
-    print(json.loads(response))
-    
-    return process
-```
-
-## Available MCP Tools
-
-Once connected, the following tools are available:
-
-### 1. `upload_python_file`
-Upload a Python file to convert its functions to API endpoints.
-
-```json
-{
-  "name": "upload_python_file",
-  "arguments": {
-    "file_path": "/path/to/your/script.py"
-  }
-}
-```
-
-Or with content directly:
-
-```json
-{
-  "name": "upload_python_file",
-  "arguments": {
-    "content": "def add(x, y):\n    return int(x) + int(y)"
-  }
-}
-```
-
-### 2. `list_endpoints`
-List all currently available API endpoints.
-
-```json
-{
-  "name": "list_endpoints",
-  "arguments": {}
-}
-```
-
-### 3. `call_endpoint`
-Call a generated API endpoint.
-
-```json
-{
-  "name": "call_endpoint",
-  "arguments": {
-    "endpoint": "/add",
-    "params": {
-      "x": "5",
-      "y": "3"
-    }
-  }
-}
-```
-
-### 4. `get_server_status`
-Get the status of the MCP server.
-
-```json
-{
-  "name": "get_server_status",
-  "arguments": {}
-}
-```
-
-## MCP Resources
-
-The server exposes these resources:
-
-- `api://endpoints` - JSON list of all generated endpoints
-- `api://swagger` - Link to Swagger UI documentation
-
-## MCP Prompts
-
-Available prompts:
-
-- `convert_functions` - Interactive prompt to convert Python functions
-
-## Example Conversation with Claude
-
-Once connected, you can say:
-
-> "Upload the file test_funcs.py and show me what endpoints were created"
-
-Claude will use the MCP tools to:
-1. Upload the file
-2. List the generated endpoints
-3. Show you the Swagger URL
-
-> "Call the add endpoint with x=10 and y=20"
-
-Claude will execute the API call and show the result.
-
-## Troubleshooting
-
-### Server not starting
-- Ensure Python 3.8+ is installed
-- Install dependencies: `pip install -r requirements.txt`
-- Check logs in the MCP client
-
-### Connection errors
-- Verify the `cwd` path is correct
-- Ensure no other process is using ports 8000/8001
-- Check firewall settings
-
-### Tools not appearing
-- Restart the MCP client
-- Check the server configuration syntax
-- Verify the Python path is correct
-
-## Security Considerations
-
-- The server executes uploaded Python code - only use with trusted sources
-- Consider running in a container or VM for isolation
-- Add authentication for production use
-
-## Development
-
-To test the MCP bridge directly:
-
-```bash
-# Test initialization
-echo '{"jsonrpc":"2.0","method":"initialize","params":{},"id":1}' | python -m mcp_server.mcp_bridge
-
-# Test listing tools
-echo '{"jsonrpc":"2.0","method":"tools/list","params":{},"id":2}' | python -m mcp_server.mcp_bridge
-```
-
-## Next Steps
-
-1. Configure your MCP client using the instructions above
-2. Upload Python files with functions
-3. Use the generated APIs through MCP tools
-4. Access Swagger docs for interactive testing
+</div>

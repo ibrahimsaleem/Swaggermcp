@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "swaggermcp": {
+      "command": "python",
+      "args": ["core/server.py"],
+      "transport": "stdio"
+    }
+  }
+} 
