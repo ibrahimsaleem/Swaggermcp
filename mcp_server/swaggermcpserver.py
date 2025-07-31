@@ -37,6 +37,7 @@ from typing import Any, List, Dict
 import requests
 from mcp.server.fastmcp import FastMCP
 from mcp.types import TextContent
+from security import safe_command
 
 # ───────────────────────── Config ─────────────────────────
 PORT = 8001
@@ -80,8 +81,7 @@ def _ensure_server_running():
     if SERVER_PROC and SERVER_PROC.poll() is None:
         return  # already live with --reload
 
-    SERVER_PROC = subprocess.Popen(
-        [
+    SERVER_PROC = safe_command.run(subprocess.Popen, [
             sys.executable,
             "-m",
             "uvicorn",

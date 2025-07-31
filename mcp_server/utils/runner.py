@@ -13,6 +13,7 @@ import signal
 import time
 from pathlib import Path
 from typing import Optional
+from security import safe_command
 
 class APIServerRunner:
     def __init__(self, app_module_path: Path, port: int = 8001):
@@ -62,4 +63,4 @@ class APIServerRunner:
         # Ensure Python can import the generated file
         env["PYTHONPATH"] = cwd + os.pathsep + env.get("PYTHONPATH", "")
         
-        return subprocess.Popen(cmd, env=env, cwd=cwd)
+        return safe_command.run(subprocess.Popen, cmd, env=env, cwd=cwd)
