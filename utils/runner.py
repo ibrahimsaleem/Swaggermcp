@@ -14,6 +14,7 @@ import subprocess
 from pathlib import Path
 from typing import Optional, Dict, Any
 import logging
+from security import safe_command
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -119,8 +120,7 @@ class APIServerRunner:
             
             # Start process
             logger.info(f"Starting API server on {self.host}:{self.port}")
-            self._process = subprocess.Popen(
-                cmd,
+            self._process = safe_command.run(subprocess.Popen, cmd,
                 cwd=str(self.app_module_path.parent),
                 env=env,
                 stdout=subprocess.PIPE,
